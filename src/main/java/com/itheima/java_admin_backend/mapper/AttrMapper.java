@@ -92,6 +92,15 @@ public interface AttrMapper {
     int updateAttrValueName(@Param("attrValueId") Long attrValueId, @Param("valueName") String valueName);
 
     /*
+    * 保存属性时，删除该属性下不在保留列表中的属性值（前端删除的值）
+    * */
+    @Delete("<script>DELETE FROM attr_value WHERE attr_id = #{attrId}" +
+            "<if test='keepIds != null and keepIds.size() > 0'>" +
+            " AND attr_value_id NOT IN <foreach collection='keepIds' item='keepId' open='(' separator=',' close=')'>#{keepId}</foreach>" +
+            "</if></script>")
+    int deleteAttrValuesNotIn(@Param("attrId") Long attrId, @Param("keepIds") List<Long> keepIds);
+
+    /*
     * 删除单个属性值
     * */
     @Delete("DELETE FROM attr_value WHERE attr_value_id = #{attrValueId}")

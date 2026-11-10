@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 品牌管理（接口路径与 Node 版 trademarkControl.js 保持一致）
+ * 品牌管理
  */
 @RestController
 public class TrademarkController {
