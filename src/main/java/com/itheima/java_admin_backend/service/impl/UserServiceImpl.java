@@ -1,6 +1,7 @@
 package com.itheima.java_admin_backend.service.impl;
 
 import com.itheima.java_admin_backend.common.PageResult;
+import com.itheima.java_admin_backend.dto.UserRoleAssignDTO;
 import com.itheima.java_admin_backend.dto.UserSaveDTO;
 import com.itheima.java_admin_backend.dto.UserUpdateDTO;
 import com.itheima.java_admin_backend.mapper.UserMapper;
@@ -22,10 +23,16 @@ public class UserServiceImpl implements UserService {
     private UserMapper userMapper;
 
     @Override
-    public PageResult<UserVO> getUserPage(Long page, Long limit) {
+    public PageResult<UserVO> getUserPage(Long page, Long limit, String username) {
+        if (page == null || page < 1) {
+            page = 1L;
+        }
+        if (limit == null || limit < 1) {
+            limit = 10L;
+        }
         Long offset = (page - 1) * limit;
-        List<UserVO> records = userMapper.selectUserPage(offset, limit);
-        Long total = userMapper.countUser();
+        List<UserVO> records = userMapper.selectUserPage(offset, limit, username);
+        Long total = userMapper.countUser(username);
         return PageResult.of(records, total, page, limit);
     }
 
@@ -67,6 +74,31 @@ public class UserServiceImpl implements UserService {
         int rows = userMapper.deleteUserByUserId(userId);
         if (rows == 0) {
             throw new RuntimeException("用户不存在");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void batchRemoveUsers(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            throw new RuntimeException("请选择要删除的用户");
+        }
+        // 先删关联再删用户，同一事务中完成
+        userMapper.deleteUserRoleByUserIds(userIds);
+        userMapper.deleteUserByUserIds(userIds);
+    }
+
+    @Override
+    @Transactional
+    public void doAssignRole(UserRoleAssignDTO userRoleAssignDTO) {
+        if (userRoleAssignDTO == null || userRoleAssignDTO.getUserId() == null) {
+            throw new RuntimeException("用户id不能为空");
+        }
+        // 先清空用户已有角色，再按新的角色列表重新分配（与 Node 版 doAssisgRole 一致）
+        userMapper.deleteUserRoleByUserId(userRoleAssignDTO.getUserId());
+        List<Long> roleIdList = userRoleAssignDTO.getRoleIdList();
+        if (roleIdList != null && !roleIdList.isEmpty()) {
+            userMapper.insertUserRoles(userRoleAssignDTO.getUserId(), roleIdList);
         }
     }
 

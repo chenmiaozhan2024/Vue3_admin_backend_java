@@ -18,9 +18,9 @@ import java.util.List;
 public interface UserMapper {
 
     /*
-    * 分页查询用户列表（含角色名）
+    * 分页查询用户列表（含角色名；username 为空时查全部，支持模糊查询）
     * */
-    @Select("SELECT " +
+    @Select("<script>SELECT " +
             "u.user_id AS id, " +
             "u.username, " +
             "u.password, " +
@@ -32,16 +32,20 @@ public interface UserMapper {
             "FROM user u " +
             "LEFT JOIN user_role ur ON u.user_id = ur.user_id " +
             "LEFT JOIN role r ON ur.role_id = r.role_id " +
+            "<where><if test='username != null and username != \"\"'>u.username LIKE CONCAT('%', #{username}, '%')</if></where> " +
             "GROUP BY u.user_id " +
             "ORDER BY u.user_id " +
-            "LIMIT #{limit} OFFSET #{offset}")
-    List<UserVO> selectUserPage(@Param("offset") Long offset, @Param("limit") Long limit);
+            "LIMIT #{limit} OFFSET #{offset}</script>")
+    List<UserVO> selectUserPage(@Param("offset") Long offset,
+                                @Param("limit") Long limit,
+                                @Param("username") String username);
 
     /*
-    * 统计用户总数
+    * 统计用户总数（username 为空时统计全部）
     * */
-    @Select("SELECT COUNT(DISTINCT u.user_id) FROM user u")
-    Long countUser();
+    @Select("<script>SELECT COUNT(DISTINCT u.user_id) FROM user u " +
+            "<where><if test='username != null and username != \"\"'>u.username LIKE CONCAT('%', #{username}, '%')</if></where></script>")
+    Long countUser(@Param("username") String username);
 
     /*
     * 新增一个用户
@@ -73,6 +77,27 @@ public interface UserMapper {
     * */
     @Delete("DELETE FROM user WHERE user_id = #{userId}")
     int deleteUserByUserId(@Param("userId") Long userId);
+
+    /*
+    * 批量删除用户与角色的关联关系
+    * */
+    @Delete("<script>DELETE FROM user_role WHERE user_id IN " +
+            "<foreach collection='userIds' item='userId' open='(' separator=',' close=')'>#{userId}</foreach></script>")
+    int deleteUserRoleByUserIds(@Param("userIds") List<Long> userIds);
+
+    /*
+    * 批量删除用户
+    * */
+    @Delete("<script>DELETE FROM user WHERE user_id IN " +
+            "<foreach collection='userIds' item='userId' open='(' separator=',' close=')'>#{userId}</foreach></script>")
+    int deleteUserByUserIds(@Param("userIds") List<Long> userIds);
+
+    /*
+    * 为用户批量分配角色（调用前会先清空原有关联）
+    * */
+    @Insert("<script>INSERT INTO user_role (user_id, role_id) VALUES " +
+            "<foreach collection='roleIds' item='roleId' separator=','>(#{userId}, #{roleId})</foreach></script>")
+    int insertUserRoles(@Param("userId") Long userId, @Param("roleIds") List<Long> roleIds);
 
     /*
     * 查询某个用户已分配的角色
