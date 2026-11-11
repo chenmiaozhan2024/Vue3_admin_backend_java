@@ -2,15 +2,13 @@ package com.itheima.java_admin_backend.config;
 
 import com.itheima.java_admin_backend.interceptor.JwtInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.servlet.MultipartConfigFactory;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import jakarta.servlet.MultipartConfigElement;
+import java.nio.file.Paths;
 
 /**
  * Web 配置：
@@ -25,20 +23,19 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private JwtInterceptor jwtInterceptor;
 
-    @Bean
-    public MultipartConfigElement multipartConfigElement() {
-        MultipartConfigFactory factory = new MultipartConfigFactory();
-        factory.setMaxFileSize("10MB");
-        factory.setMaxRequestSize("20MB");
-        return factory.createMultipartConfig();
-    }
-
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 上传目录：{项目运行目录}/upload/img/sph/...
-        String uploadPath = System.getProperty("user.dir") + "/upload/img/";
-        registry.addResourceHandler("/api/static/img/**")
-                .addResourceLocations("file:" + uploadPath);
+        // 用 toUri() 转成标准 file URL，避免中文/空格路径解析出错，并保证以 / 结尾
+        String uploadPath = Paths.get(System.getProperty("user.dir"), "upload", "img").toUri().toString();
+        if (!uploadPath.endsWith("/")) {
+            uploadPath = uploadPath + "/";
+        }
+        // 同时兼容两种访问方式：
+        // /api/static/img/...  —— 后台上传接口返回的地址
+        // /static/img/...      —— 课程资料里历史数据（如 20240908/huawei.jpg）以及 Node 版的路径
+        registry.addResourceHandler("/api/static/img/**", "/static/img/**")
+                .addResourceLocations(uploadPath);
     }
 
     /*

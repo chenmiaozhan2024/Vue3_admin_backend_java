@@ -44,7 +44,7 @@ public class RoleServiceImpl implements RoleService {
         if (roleSaveDTO == null || roleSaveDTO.getRoleName() == null || roleSaveDTO.getRoleName().isBlank()) {
             throw new RuntimeException("角色名称不能为空");
         }
-        // 角色名称唯一性校验（与 Node 版 saveRole 一致）
+        // 角色名称唯一性校验
         if (roleMapper.countByRoleName(roleSaveDTO.getRoleName()) > 0) {
             throw new RuntimeException("角色名称已存在");
         }
@@ -74,7 +74,7 @@ public class RoleServiceImpl implements RoleService {
         if (roleId == null) {
             throw new RuntimeException("角色id不能为空");
         }
-        // 先清理角色与菜单、用户的关联，再删除角色（Node 版只删 role，会残留脏数据）
+        // 先清理角色与菜单、用户的关联，再删除角色
         roleMapper.deleteRoleMenuByRoleId(roleId);
         roleMapper.deleteUserRoleByRoleId(roleId);
         int rows = roleMapper.deleteRoleByRoleId(roleId);
@@ -97,7 +97,7 @@ public class RoleServiceImpl implements RoleService {
             menu.setChildren(new ArrayList<>());
             menuMap.put(menu.getId(), menu);
         }
-        // 2. 按 pid 组装成树，pid 为 0 的是根节点（与 Node 版构建逻辑一致）
+        // 2. 按 pid 组装成树，pid 为 0 的是根节点
         List<MenuVO> tree = new ArrayList<>();
         for (MenuVO menu : menuList) {
             if (menu.getPid() == null || menu.getPid() == 0L) {

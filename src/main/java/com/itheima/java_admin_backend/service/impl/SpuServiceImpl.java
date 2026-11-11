@@ -1,9 +1,24 @@
 package com.itheima.java_admin_backend.service.impl;
 
+import com.itheima.java_admin_backend.common.PageResult;
+import com.itheima.java_admin_backend.dto.SpuImageDTO;
+import com.itheima.java_admin_backend.dto.SpuSaleAttrDTO;
+import com.itheima.java_admin_backend.dto.SpuSaleAttrValueDTO;
+import com.itheima.java_admin_backend.dto.SpuSaveDTO;
 import com.itheima.java_admin_backend.mapper.SpuMapper;
 import com.itheima.java_admin_backend.service.SpuService;
+import com.itheima.java_admin_backend.vo.SaleAttrVO;
+import com.itheima.java_admin_backend.vo.SkuVO;
+import com.itheima.java_admin_backend.vo.SpuImageVO;
+import com.itheima.java_admin_backend.vo.SpuSaleAttrVO;
+import com.itheima.java_admin_backend.vo.SpuVO;
+import com.itheima.java_admin_backend.vo.TrademarkVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class SpuServiceImpl implements SpuService {
